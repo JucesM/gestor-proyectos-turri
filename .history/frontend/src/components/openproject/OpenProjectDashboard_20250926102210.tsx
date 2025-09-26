@@ -69,7 +69,6 @@ const OpenProjectDashboard: React.FC = () => {
     tasks: false,
     profile: false
   });
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   // Cargar perfil de usuario
@@ -138,15 +137,14 @@ const OpenProjectDashboard: React.FC = () => {
       };
 
       // Obtener detalles del proyecto, miembros y tareas en paralelo
-      const [projectRes, membersRes, allTasksRes, inProgressTasksRes] = await Promise.all([
+      const [projectRes, membersRes, tasksRes] = await Promise.all([
         fetch(`${API_BASE_URL}/projects/projects/${projectId}`, { headers }),
         fetch(`${API_BASE_URL}/projects/projects/${projectId}/members`, { headers }),
-        fetch(`${API_BASE_URL}/projects/projects/${projectId}/work-packages`, { headers }),
-        fetch(`${API_BASE_URL}/projects/projects/${projectId}/work-packages?filters=[{"status_id":{"operator":"=","values":["7"]}}]`, { headers })
+        fetch(`${API_BASE_URL}/projects/projects/${projectId}/work-packages`, { headers })
       ]);
 
       // Verificar estado de autenticación
-      if (projectRes.status === 401 || membersRes.status === 401 || allTasksRes.status === 401 || inProgressTasksRes.status === 401) {
+      if (projectRes.status === 401 || membersRes.status === 401 || tasksRes.status === 401) {
         sessionStorage.removeItem('authToken');
         toast.error('Sesión expirada. Por favor inicie sesión nuevamente.');
         navigate('/login');
@@ -154,7 +152,7 @@ const OpenProjectDashboard: React.FC = () => {
       }
 
       // Verificar que las respuestas sean exitosas
-      if (!projectRes.ok || !membersRes.ok || !allTasksRes.ok || !inProgressTasksRes.ok) {
+      if (!projectRes.ok || !membersRes.ok || !tasksRes.ok) {
         const errorText = await projectRes.text();
         console.error('Error en la respuesta:', errorText);
         throw new Error('Error al cargar los detalles del proyecto');
@@ -162,25 +160,20 @@ const OpenProjectDashboard: React.FC = () => {
 
       const projectData = await projectRes.json();
       const membersData = await membersRes.json();
-      const allTasksData = await allTasksRes.json();
-      const inProgressTasksData = await inProgressTasksRes.json();
+      const tasksData = await tasksRes.json();
 
       const project = projectData?.data || projectData?.project || projectData || {};
       const members = Array.isArray(membersData?.data) ? membersData.data
                   : Array.isArray(membersData?.members) ? membersData.members
                   : [];
       console.log('Members data:', members);
-      const allTasks = Array.isArray(allTasksData?.data) ? allTasksData.data
-                  : Array.isArray(allTasksData?._embedded?.elements) ? allTasksData._embedded.elements
-                  : [];
-      const inProgressTasks = Array.isArray(inProgressTasksData?.data) ? inProgressTasksData.data
-                  : Array.isArray(inProgressTasksData?._embedded?.elements) ? inProgressTasksData._embedded.elements
+      const tasks = Array.isArray(tasksData?.data) ? tasksData.data
+                  : Array.isArray(tasksData?._embedded?.elements) ? tasksData._embedded.elements
                   : [];
 
       setSelectedProject(project);
       setMembers(members);
-      setTasks(allTasks);
-      setInProgressTasks(inProgressTasks);
+      setTasks(tasks);
 
     } catch (error) {
       console.error('Error fetching project details:', error);
@@ -275,7 +268,7 @@ const OpenProjectDashboard: React.FC = () => {
                 .map((member, index) => {
                 // Todas las tareas ya están filtradas como "En curso" en el backend
                 // Solo necesitamos encontrar la primera tarea asignada a este miembro
-                const currentTask = inProgressTasks.find(task => {
+                const currentTask = tasks.find(task => {
                   const assignee = task._links?.assignee;
                   return assignee &&
                          assignee.title &&
@@ -326,7 +319,6 @@ const OpenProjectDashboard: React.FC = () => {
           <div className="performance-section">
             <div className="performance-card">
               <h2 className="performance-title">Rendimiento del Equipo</h2>
-              <button className="expand-charts-btn" onClick={() => setIsModalOpen(true)}>Ver Gráficos Ampliados</button>
 
               {/* Charts */}
               <div className="charts-container">
@@ -461,59 +453,6 @@ const OpenProjectDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Modal for Expanded Charts */}
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
-            <h2>Gráficos de Rendimiento del Equipo</h2>
-            <div className="modal-charts">
-              <div className="modal-chart-card">
-                <h3>Estado de Tareas</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percentage }) => `${name}: ${percentage}%`}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="chart-legend">
-                  {pieData.map((item, index) => (
-                    <div key={index} className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4] }}></span>
-                      <span>{item.name} {item.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="modal-chart-card">
-                <h3>Cantidad de tareas realizadas</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={barData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="tasks" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -69,7 +69,6 @@ const OpenProjectDashboard: React.FC = () => {
     tasks: false,
     profile: false
   });
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   // Cargar perfil de usuario
@@ -326,7 +325,6 @@ const OpenProjectDashboard: React.FC = () => {
           <div className="performance-section">
             <div className="performance-card">
               <h2 className="performance-title">Rendimiento del Equipo</h2>
-              <button className="expand-charts-btn" onClick={() => setIsModalOpen(true)}>Ver Gráficos Ampliados</button>
 
               {/* Charts */}
               <div className="charts-container">
@@ -461,59 +459,6 @@ const OpenProjectDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Modal for Expanded Charts */}
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
-            <h2>Gráficos de Rendimiento del Equipo</h2>
-            <div className="modal-charts">
-              <div className="modal-chart-card">
-                <h3>Estado de Tareas</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percentage }) => `${name}: ${percentage}%`}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="chart-legend">
-                  {pieData.map((item, index) => (
-                    <div key={index} className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4] }}></span>
-                      <span>{item.name} {item.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="modal-chart-card">
-                <h3>Cantidad de tareas realizadas</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={barData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="tasks" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
