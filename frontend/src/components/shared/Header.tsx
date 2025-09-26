@@ -68,10 +68,10 @@ const Header: React.FC<HeaderProps> = ({ activeTab = 'projects', showProjectsLin
           className="avatar"
           onClick={() => setShowDropdown(!showDropdown)}
         />
-        <FiChevronDown
-          className="chevron"
-          onClick={() => setShowDropdown(!showDropdown)}
-        />
+        {React.createElement(FiChevronDown, {
+          className: "chevron",
+          onClick: () => setShowDropdown(!showDropdown)
+        })}
         {showDropdown && (
           <div className="user-dropdown">
             <button onClick={handleLogout} className="logout-btn">
