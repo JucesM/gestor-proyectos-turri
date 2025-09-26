@@ -231,10 +231,15 @@ const OpenProjectDashboard: React.FC = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const barData = members.map(member => ({
-    name: member.user,
-    tasks: completedByMember[member.user] || 0
-  }));
+  const barData = members.map(member => {
+    const parts = member.user.split(' ');
+    const shortName = parts.length > 1 ? `${parts[0]} ${parts[1].charAt(0)}.` : member.user;
+    return {
+      name: shortName,
+      fullName: member.user,
+      tasks: completedByMember[member.user] || 0
+    };
+  });
 
   return (
     <div className="dashboard">
@@ -347,7 +352,7 @@ const OpenProjectDashboard: React.FC = () => {
                             <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip labelFormatter={(label) => barData.find(d => d.name === label)?.fullName || label} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="chart-legend">
@@ -368,9 +373,9 @@ const OpenProjectDashboard: React.FC = () => {
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={barData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10 }} height={60} />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip labelFormatter={(label) => barData.find(d => d.name === label)?.fullName || label} />
                         <Bar dataKey="tasks" fill="#8884d8" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -501,7 +506,7 @@ const OpenProjectDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} height={60} />
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="tasks" fill="#8884d8" />
