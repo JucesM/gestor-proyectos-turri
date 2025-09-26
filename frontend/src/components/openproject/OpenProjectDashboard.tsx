@@ -220,8 +220,8 @@ const OpenProjectDashboard: React.FC = () => {
     percentage: totalTasks > 0 ? ((value / totalTasks) * 100).toFixed(1) : '0'
   }));
 
-  // Tareas completadas (cerradas) - todas las que no están en progreso (status_id != 7)
-  const completedTasks = tasks.filter(task => task.status_id !== 7);
+  // Tareas completadas (cerradas) - todas las que no están en progreso ni nuevas (status_id != 7 y != 1)
+  const completedTasks = tasks.filter(task => task.status_id !== 7 && task.status_id !== 1);
 
   const completedByMember = completedTasks.reduce((acc, task) => {
     const assignee = task._links?.assignee?.title;
