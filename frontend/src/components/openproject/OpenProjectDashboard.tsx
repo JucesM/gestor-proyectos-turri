@@ -33,6 +33,7 @@ interface Task {
   subject?: string;
   startDate?: string;
   dueDate?: string;
+  status_id?: number;
   _links?: {
     assignee?: {
       title?: string;
@@ -219,11 +220,8 @@ const OpenProjectDashboard: React.FC = () => {
     percentage: totalTasks > 0 ? ((value / totalTasks) * 100).toFixed(1) : '0'
   }));
 
-  // Tareas completadas (asumiendo que 'Hecha' o 'Cerrada' indican completadas)
-  const completedTasks = tasks.filter(task => {
-    const status = task._links?.status?.title?.toLowerCase();
-    return status?.includes('hecha') || status?.includes('cerrada') || status?.includes('closed');
-  });
+  // Tareas completadas (cerradas) - todas las que no están en progreso (status_id != 7)
+  const completedTasks = tasks.filter(task => task.status_id !== 7);
 
   const completedByMember = completedTasks.reduce((acc, task) => {
     const assignee = task._links?.assignee?.title;
