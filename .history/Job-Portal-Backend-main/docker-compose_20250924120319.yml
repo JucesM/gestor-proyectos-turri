@@ -1,0 +1,52 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - OPENPROJECT_URL=http://181.49.45.246:9000
+      - OPENPROJECT_API_TOKEN=bc23b977ca18a0c11c80af2cad3c55039c86e2a7ee134718df24d3a7c39ce953
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=julio.turri
+      - DB_NAME=gestor_proyectos_turri
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: gestor_proyectos_turri
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: julio.turri
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  images:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./uploads:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

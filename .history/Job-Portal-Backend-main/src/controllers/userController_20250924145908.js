@@ -1,0 +1,238 @@
+import multer from 'multer';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { pool } from '../config/db.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
+
+// Configuración de multer para subida de archivos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './uploads/avatars/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
+  }
+});
+
+// Obtener perfil de usuario
+export async function getUserProfile(req, res) {
+  try {
+    console.log('=== GET USER PROFILE ===');
+    console.log('req.user:', req.user);
+    const userId = req.user.id;
+    console.log('userId from req.user.id:', userId);
+
+    const result = await pool.query(
+      'SELECT id, openproject_id, email, name, avatar_url, roles, created_at, updated_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    console.log('Query result:', result.rows);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Error getting user profile:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ message: 'Error al obtener perfil de usuario' });
+  }
+}
+
+// Actualizar avatar de usuario
+export async function uploadAvatar(req, res) {
+  try {
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se proporcionó ningún archivo' });
+    }
+
+    // Generar URL del avatar
+    const avatarUrl = `http://localhost:8081/avatars/${req.file.filename}`;
+
+    // Actualizar en base de datos
+    const result = await pool.query(
+      'UPDATE users SET avatar_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+      [avatarUrl, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      message: 'Avatar actualizado correctamente',
+      avatarUrl,
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    res.status(500).json({ message: 'Error al subir avatar' });
+  }
+}
+
+// Actualizar perfil de usuario
+export async function updateUserProfile(req, res) {
+  try {
+    const userId = req.user.id;
+    const { name, email, roles } = req.body;
+
+    const result = await pool.query(
+      'UPDATE users SET name = $1, email = $2, roles = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *',
+      [name, email, roles, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      message: 'Perfil actualizado correctamente',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Error al actualizar perfil' });
+  }
+}
+
+// Sincronizar usuario con OpenProject
+export async function syncUserWithOpenProject(req, res) {
+  try {
+    const { openproject_id } = req.body;
+
+    if (!openproject_id) {
+      return res.status(400).json({ message: 'Se requiere openproject_id' });
+    }
+
+    console.log('Syncing user with OpenProject ID:', openproject_id);
+
+    // Obtener datos del usuario desde OpenProject
+    const userResponse = await fetch(`${process.env.OPENPROJECT_URL}/api/v3/users/${openproject_id}`, {
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`apikey:${process.env.OPENPROJECT_API_TOKEN}`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.error('Failed to fetch user from OpenProject:', userResponse.status);
+      return res.status(404).json({ message: 'Usuario no encontrado en OpenProject' });
+    }
+
+    const userData = await userResponse.json();
+    console.log('OpenProject user data:', userData);
+
+    // Intentar actualizar usuario existente, o crear uno nuevo si no existe
+    const result = await pool.query(
+      `INSERT INTO users (openproject_id, name, email, avatar_url, roles, last_sync, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT (openproject_id)
+       DO UPDATE SET
+         name = EXCLUDED.name,
+         email = EXCLUDED.email,
+         avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+         last_sync = CURRENT_TIMESTAMP,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [
+        openproject_id,
+        userData.name,
+        userData.email,
+        userData.avatar,
+        [] // roles por defecto
+      ]
+    );
+
+    console.log('User synced/created successfully:', result.rows[0]);
+
+    res.json({
+      message: 'Usuario sincronizado con OpenProject',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error syncing user with OpenProject:', error);
+    res.status(500).json({ message: 'Error al sincronizar usuario con OpenProject' });
+  }
+}
+
+// Crear usuario
+export async function createUser(req, res) {
+  try {
+    console.log('=== CREATE USER ENDPOINT CALLED ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    console.log('Request headers:', req.headers);
+    console.log('Creating user with data:', req.body);
+    const { openproject_id, name, email, roles } = req.body;
+
+    if (!openproject_id || !name || !email) {
+      console.log('Missing required fields:', { openproject_id, name, email });
+      return res.status(400).json({ message: 'Faltan campos requeridos: openproject_id, name, email' });
+    }
+
+    console.log('Inserting user into database...');
+    const result = await pool.query(
+      'INSERT INTO users (openproject_id, name, email, roles) VALUES ($1, $2, $3, $4) RETURNING *',
+      [openproject_id, name, email, roles || []]
+    );
+
+    console.log('User created successfully:', result.rows[0]);
+    res.status(201).json({
+      message: 'Usuario creado correctamente',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    console.error('Error code:', error.code);
+    console.error('Error details:', error.detail);
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(409).json({ message: 'Ya existe un usuario con ese openproject_id o email' });
+    } else {
+      res.status(500).json({ message: `Error al crear usuario: ${error.message}` });
+    }
+  }
+}
+
+// Obtener usuario por OpenProject ID
+export async function getUserByOpenProjectId(req, res) {
+  try {
+    const { openprojectId } = req.params;
+
+    const result = await pool.query(
+      'SELECT id, openproject_id, email, name, avatar_url, roles, created_at, updated_at FROM users WHERE openproject_id = $1',
+      [openprojectId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado en base de datos local' });
+    }
+
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching user by OpenProject ID:', error);
+    res.status(500).json({ message: 'Error al buscar usuario' });
+  }
+}
+
+export { upload };

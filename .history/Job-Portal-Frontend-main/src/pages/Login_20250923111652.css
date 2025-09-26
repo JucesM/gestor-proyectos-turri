@@ -1,0 +1,129 @@
+/* Contenedor principal */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding: 20px;
+}
+
+/* Formulario de inicio de sesión */
+.login-form {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+}
+
+.login-form h2 {
+  margin: 0 0 2rem 0;
+  color: #2c3e50;
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Grupos de formulario */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #f8fafc;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  background-color: white;
+}
+
+/* Botón de inicio de sesión */
+.btn-login {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+}
+
+.btn-login:hover {
+  background-color: #2980b9;
+}
+
+.btn-login:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+/* Spinner de carga */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s ease-in-out infinite;
+}
+
+/* Texto de ayuda */
+.form-hint {
+  margin-top: 0.5rem;
+  color: #718096;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Estilos responsivos */
+@media (max-width: 480px) {
+  .login-form {
+    padding: 1.75rem;
+  }
+  
+  .login-form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .btn-login {
+    height: 46px;
+  }
+}
