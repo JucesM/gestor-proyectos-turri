@@ -133,7 +133,19 @@ import {
       }
   
       const client = makeClient(userToken);
-      const { data } = await client.get(`/memberships?pageSize=100`);
+      const batchSize = 100;
+      let allMemberships = [];
+      let offset = 1;
+      let total = Infinity;
+      while (allMemberships.length < total) {
+        const { data } = await client.get(`/memberships?pageSize=${batchSize}&offset=${offset}`);
+        if (data._embedded?.elements) {
+          allMemberships.push(...data._embedded.elements);
+        }
+        total = data.total;
+        offset += batchSize;
+      }
+      const data = { _embedded: { elements: allMemberships } };
   
       // Group memberships by user
       const userMemberships = new Map();

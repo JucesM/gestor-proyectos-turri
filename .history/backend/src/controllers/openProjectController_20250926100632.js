@@ -133,7 +133,19 @@ import {
       }
   
       const client = makeClient(userToken);
-      const { data } = await client.get(`/memberships?pageSize=100`);
+      const batchSize = 100;
+      let allMemberships = [];
+      let offset = 1;
+      let total = Infinity;
+      while (allMemberships.length < total) {
+        const { data } = await client.get(`/memberships?pageSize=${batchSize}&offset=${offset}`);
+        if (data._embedded?.elements) {
+          allMemberships.push(...data._embedded.elements);
+        }
+        total = data.total;
+        offset += batchSize;
+      }
+      const data = { _embedded: { elements: allMemberships } };
   
       // Group memberships by user
       const userMemberships = new Map();
@@ -162,13 +174,14 @@ import {
   
       for (const [userId, { memberships, projects }] of userMemberships) {
         const firstMembership = memberships[0];
-        const hasActiveTasks = false; // Temporarily set to false
+        const activeProjects = Array.from(userTasks.get(userId) || []);
+        const hasActiveTasks = activeProjects.length > 0;
 
         // Modify the membership
         const modifiedMembership = { ...firstMembership };
         modifiedMembership.availability = hasActiveTasks ? 'Ocupado' : 'Disponible';
         if (hasActiveTasks) {
-          // modifiedMembership._links.project.title = activeProjects.join(', ');
+          modifiedMembership._links.project.title = activeProjects.join(', ');
         }
         // If no active tasks, keep the original project title
 
