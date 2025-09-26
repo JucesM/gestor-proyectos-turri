@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiSearch } from 'react-icons/fi';
 import Header from '../components/shared/Header';
 import './ProjectsHome.css';
 
@@ -109,7 +108,7 @@ const ProjectsHome: React.FC = () => {
         <div className="content">
           <div className="search-container">
             <div className="search-input">
-              <FiSearch className="search-icon" />
+              <span className="search-icon">🔍</span>
               <input
                 type="text"
                 placeholder="Buscar..."
@@ -141,7 +140,7 @@ const ProjectsHome: React.FC = () => {
         {/* Search Bar */}
         <div className="search-container">
           <div className="search-input">
-            <FiSearch className="search-icon" />
+            <span className="search-icon">🔍</span>
             <input
               type="text"
               placeholder="Buscar..."

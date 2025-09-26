@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiSearch, FiX, FiChevronDown, FiMessageSquare, FiUserPlus, FiMoreHorizontal } from 'react-icons/fi';
 import Header from '../components/shared/Header';
 import { generateAvatarUrl } from '../utils/avatarUtils';
 import './Collaborators.css';
@@ -185,7 +184,7 @@ const Collaborators: React.FC = () => {
         <div className="content">
           <div className="controls-bar">
             <div className="search-input">
-              <FiSearch className="search-icon" />
+              <span className="search-icon">🔍</span>
               <input type="text" placeholder="Buscar por nombre, rol o correo…" readOnly />
             </div>
             <div className="filters-row">
@@ -236,7 +235,7 @@ const Collaborators: React.FC = () => {
       <div className="content">
         <div className="controls-bar">
           <div className="search-input">
-            <FiSearch className="search-icon" />
+            <span className="search-icon">🔍</span>
             <input
               type="text"
               placeholder="Buscar por nombre, rol o correo…"
@@ -306,12 +305,12 @@ const Collaborators: React.FC = () => {
             {activeFilters.map((filter, index) => (
               <span key={index} className="filter-chip">
                 {filter}
-                <FiX onClick={() => {
+                <span onClick={() => {
                   // Find which filter to clear
                   const filterKeys = Object.keys(filters) as (keyof typeof filters)[];
                   const keyToClear = filterKeys.find(key => filters[key] === filter);
                   if (keyToClear) handleFilterChange(keyToClear, '');
-                }} />
+                }}>✕</span>
               </span>
             ))}
             <button className="clear-filters-btn" onClick={clearFilters}>
@@ -358,9 +357,9 @@ const Collaborators: React.FC = () => {
                         </div>
                       </div>
                       <div className="card-actions">
-                        <FiMessageSquare className="action-icon" />
-                        <FiUserPlus className="action-icon" />
-                        <FiMoreHorizontal className="action-icon" />
+                        <span className="action-icon">💬</span>
+                        <span className="action-icon">👤</span>
+                        <span className="action-icon">⋯</span>
                       </div>
                     </div>
                   ))}
@@ -389,9 +388,9 @@ const Collaborators: React.FC = () => {
                   </div>
                 </div>
                 <div className="card-actions">
-                  <FiMessageSquare className="action-icon" />
-                  <FiUserPlus className="action-icon" />
-                  <FiMoreHorizontal className="action-icon" />
+                  <span className="action-icon">💬</span>
+                  <span className="action-icon">👤</span>
+                  <span className="action-icon">⋯</span>
                 </div>
               </div>
             ))}

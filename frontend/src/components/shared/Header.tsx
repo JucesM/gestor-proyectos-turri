@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronDown, FiLogOut } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import './Header.css';
 import { getAvatarUrlSync, getAvatarAccessibilityAttrs } from '../../utils/avatarUtils';
@@ -68,14 +67,16 @@ const Header: React.FC<HeaderProps> = ({ activeTab = 'projects', showProjectsLin
           className="avatar"
           onClick={() => setShowDropdown(!showDropdown)}
         />
-        {React.createElement(FiChevronDown, {
-          className: "chevron",
-          onClick: () => setShowDropdown(!showDropdown)
-        })}
+        <span
+          className="chevron"
+          onClick={() => setShowDropdown(!showDropdown)}
+        >
+          ▼
+        </span>
         {showDropdown && (
           <div className="user-dropdown">
             <button onClick={handleLogout} className="logout-btn">
-              <FiLogOut className="logout-icon" />
+              <span className="logout-icon">🚪</span>
               Cerrar sesión
             </button>
           </div>
